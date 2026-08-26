@@ -119,7 +119,7 @@ export function profileImageUrlUpload () {
       const loggedInUser = security.authenticatedUsers.get(req.cookies.token)
       if (loggedInUser) {
         try {
-          if (!isChallenge && !await isSafeUrl(url)) {
+          if (!await isSafeUrl(url)) {
             throw new Error('Blocked SSRF attempt')
           }
           const response = await fetch(url)
@@ -133,7 +133,7 @@ export function profileImageUrlUpload () {
           await user?.update({ profileImage: `/assets/public/images/uploads/${loggedInUser.data.id}.${ext}` })
         } catch (error) {
           try {
-            const isSafe = isChallenge || await isSafeUrl(url)
+            const isSafe = await isSafeUrl(url)
             if (isSafe) {
               const user = await UserModel.findByPk(loggedInUser.data.id)
               await user?.update({ profileImage: url })

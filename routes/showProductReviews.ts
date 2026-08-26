@@ -27,8 +27,22 @@ global.sleep = (time: number) => {
 
 export function showProductReviews () {
   return (req: Request, res: Response, next: NextFunction) => {
+    const isChallengeEnabled = utils.isChallengeEnabled(challenges.noSqlCommandChallenge)
     // Truncate id to avoid unintentional RCE
-    const id = !utils.isChallengeEnabled(challenges.noSqlCommandChallenge) ? Number(req.params.id) : utils.trunc(req.params.id, 40)
+    const id = !isChallengeEnabled ? Number(req.params.id) : utils.trunc(req.params.id, 40)
+
+    if (isChallengeEnabled) {
+      const idPattern = /^\d+(?:\s*(?:\|\||&&)\s*sleep\(\s*\d+\s*\))?$/
+      if (typeof id !== 'string' || !idPattern.test(id)) {
+        res.status(400).json({ error: 'Wrong Params' })
+        return
+      }
+    } else {
+      if (isNaN(id as number)) {
+        res.status(400).json({ error: 'Wrong Params' })
+        return
+      }
+    }
 
     // Measure how long the query takes, to check if there was a nosql dos attack
     const t0 = new Date().getTime()
